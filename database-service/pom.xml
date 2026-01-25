@@ -12,19 +12,96 @@
     <name>database-service</name>
     <description>Database Management Library with Flyway</description>
 
+    <properties>
+        <it-database.port>5432</it-database.port>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.44.0</version>
+                <executions>
+                    <execution>
+                        <id>prepare-database</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>postgis/postgis:12-3.4</name>
+                                    <alias>it-database</alias>
+                                    <run>
+                                        <env>
+                                            <POSTGRES_DB>physiological_db</POSTGRES_DB>
+                                            <POSTGRES_USER>user</POSTGRES_USER>
+                                            <POSTGRES_PASSWORD>123!</POSTGRES_PASSWORD>
+                                        </env>
+                                        <ports>
+                                            <port>it-database.port:5432</port>
+                                        </ports>
+                                        <wait>
+                                            <log>(?s)database system is ready to accept connections.*database system is ready to accept connections</log>
+                                            <time>60000</time>
+                                        </wait>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>remove-database</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>9.22.3</version>
+                <executions>
+                    <execution>
+                        <id>validate-migration</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>migrate</goal>
+                        </goals>
+                        <configuration>
+                            <url>jdbc:postgresql://localhost:${it-database.port}/physiological_db</url>
+                            <user>user</user>
+                            <password>123!</password>
+                            <locations>
+                                <location>filesystem:src/main/resources/db/migration</location>
+                            </locations>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.7.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 </project>
