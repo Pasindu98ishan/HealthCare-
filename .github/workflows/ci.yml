@@ -23,6 +23,13 @@ jobs:
       - name: Build with Maven
         run: mvn -B package --file pom.xml
 
+      - name: Validate Docker builds
+        run: |
+          docker build -t test-analytics analytics-service
+          docker build -t test-configuration configuration-service
+          docker build -t test-enricher enricher-service
+          docker build -t test-storage storage-service
+
       # The following steps are commented out.
       # You will need to configure secrets in your repository for Docker Hub.
       # - name: Log in to Docker Hub
