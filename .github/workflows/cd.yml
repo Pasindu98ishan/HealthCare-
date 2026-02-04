@@ -39,7 +39,7 @@ jobs:
             mvn -B install --file common-lib/pom.xml -DskipTests
             mvn -B install --file database-service/pom.xml -DskipTests
       - name: Build with Maven
-        run: mvn -B package --file storage-service/pom.xml
+        run: mvn -B clean package -pl storage-service -am -DskipTests
 
 
       - name: Configure AWS credentials
