@@ -69,7 +69,10 @@ jobs:
 
       - name: Download Task Definition
         run: |
-          aws ecs describe-task-definition --task-definition storage-service-task --query taskDefinition > task-definition.json
+          # Downloads the task definition and removes read-only fields that cause deployment errors
+          aws ecs describe-task-definition --task-definition storage-service-task --query taskDefinition | jq 'del(.enableFaultInjection, .taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-definition.json
+
+    
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
