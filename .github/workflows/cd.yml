@@ -32,8 +32,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install Dependencies (Common & Database)
+        run: |
+            mvn -B install --file common-lib/pom.xml -DskipTests
+            mvn -B install --file database-service/pom.xml -DskipTests
       - name: Build with Maven
         run: mvn -B package --file storage-service/pom.xml
+
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
