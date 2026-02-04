@@ -62,7 +62,7 @@
                                 <argument>-f</argument>
                                 <argument>enricher-service/Dockerfile</argument>
                                 <argument>-t</argument>
-                                <argument>newproject-enricher-service:latest</argument>
+                                <argument>healthcare-enricher-service:latest</argument>
                                 <argument>.</argument>
                             </arguments>
                         </configuration>

@@ -57,7 +57,7 @@
                                 <argument>-f</argument>
                                 <argument>configuration-service/Dockerfile</argument>
                                 <argument>-t</argument>
-                                <argument>newproject-configuration-service:latest</argument>
+                                <argument>healthcare-configuration-service:latest</argument>
                                 <argument>.</argument>
                             </arguments>
                         </configuration>
