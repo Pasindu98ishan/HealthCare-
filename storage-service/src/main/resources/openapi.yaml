@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Storage Service API
+  description: API for storing physiological data
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /{customer}/storage/data:
+    post:
+      tags:
+        - Storage
+      summary: Store physiological data
+      operationId: storeData
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The customer identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageRequest'
+      responses:
+        '200':
+          description: Data stored successfully
+        '400':
+          description: Invalid input
+  /storage/customer:
+    post:
+      tags:
+        - Storage
+      summary: Create a new customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '200':
+          description: Customer created successfully
+        '400':
+          description: Invalid input
+  /{customer}/storage/hospital:
+    post:
+      tags:
+        - Storage
+      summary: Create a new hospital
+      operationId: createHospital
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalRequest'
+      responses:
+        '200':
+          description: Hospital created successfully
+        '400':
+          description: Invalid input
+  /{customer}/storage/ward:
+    post:
+      tags:
+        - Storage
+      summary: Create a new ward
+      operationId: createWard
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WardRequest'
+      responses:
+        '200':
+          description: Ward created successfully
+        '400':
+          description: Invalid input
+components:
+  schemas:
+    StorageRequest:
+      type: object
+      required:
+        - hospital
+        - ward
+        - data
+      properties:
+        hospital:
+          type: string
+          description: Name of the hospital
+        ward:
+          type: string
+          description: Ward identifier
+        data:
+          type: object
+          additionalProperties:
+            type: string
+          description: Key-value pairs of physiological data
+    CustomerRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Name of the customer
+    HospitalRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Name of the hospital
+        address:
+          type: string
+          description: Address of the hospital
+    WardRequest:
+      type: object
+      required:
+        - name
+        - hospitalName
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Name of the ward
+        alias:
+          type: string
+          description: Alias for the ward
+        hospitalName:
+          type: string
+          minLength: 1
+          description: Name of the hospital the ward belongs to
+
