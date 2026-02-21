@@ -2,7 +2,6 @@ package com.example.physiological.storage.service.impl;
 
 import com.example.physiological.storage.entity.Customer;
 import com.example.physiological.storage.entity.Hospital;
-import com.example.physiological.storage.model.PhysiologicalData;
 import com.example.physiological.storage.entity.Ward;
 import com.example.physiological.storage.model.CustomerRequest;
 import com.example.physiological.storage.model.HospitalRequest;
@@ -11,10 +10,15 @@ import com.example.physiological.storage.model.WardRequest;
 import com.example.physiological.storage.repository.CustomerRepository;
 import com.example.physiological.storage.repository.HospitalRepository;
 import com.example.physiological.storage.repository.WardRepository;
+import com.example.physiological.storage.service.KafkaProducerService;
 import com.example.physiological.storage.service.StorageService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +27,8 @@ public class StorageServiceImpl implements StorageService {
     private final CustomerRepository customerRepository;
     private final HospitalRepository hospitalRepository;
     private final WardRepository wardRepository;
+    private final KafkaProducerService kafkaProducerService;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -85,10 +91,19 @@ public class StorageServiceImpl implements StorageService {
         Ward ward = wardRepository.findByNameAndHospitalId(request.getWard(), hospital.getId())
                 .orElseThrow(() -> new RuntimeException("Ward not found: " + request.getWard()));
 
-        PhysiologicalData data = new PhysiologicalData();
-        data.setCustomer(customer.getName());
-        data.setHospital(hospital.getName());
-        data.setWard(ward.getName());
-        data.setData(request.getData());
+        Map<String, Object> flatData = new HashMap<>();
+        flatData.put("customer", customer.getName());
+        flatData.put("hospital", hospital.getName());
+        flatData.put("ward", ward.getName());
+        if (request.getData() != null) {
+            flatData.putAll(request.getData());
+        }
+
+        try {
+            String message = objectMapper.writeValueAsString(flatData);
+            kafkaProducerService.sendMessage(customer.getName(), message);
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializing data to JSON", e);
+        }
     }
 }
