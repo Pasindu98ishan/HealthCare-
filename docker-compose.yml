@@ -44,9 +44,13 @@ services:
     image: healthcare-configuration-service:latest
     container_name: configuration-service
     ports:
-      - "8888:8888"
+      - "8082:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: native
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/physiological_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: 123
+    depends_on:
+      - postgres
 
   storage-service:
     image: healthcare-storage-service:latest
