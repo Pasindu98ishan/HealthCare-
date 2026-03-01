@@ -7,21 +7,33 @@ on:
       - main
     paths:
       - 'storage-service/**'
+      - 'configuration-service/**'
       - '.github/workflows/cd.yml'
 
 env:
-  AWS_REGION: us-east-1                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: storage-service         # set this to your Amazon ECR repository name
-  ECS_SERVICE: storage-service     # set this to your Amazon ECS service name
-  ECS_CLUSTER: default     # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: .aws/task-def.json
-  CONTAINER_NAME: storage-service
+  AWS_REGION: us-east-1                   # set this to your preferred AWS region
+  ECS_CLUSTER: default                    # set this to your Amazon ECS cluster name
 
 jobs:
   deploy:
-    name: Deploy
+    name: Deploy ${{ matrix.service }}
     runs-on: ubuntu-latest
     environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: storage-service
+            ecr_repository: storage-service
+            ecs_service: storage-service
+            container_name: storage-service
+            task_definition_name: storage-service-task
+
+          - service: configuration-service
+            ecr_repository: configuration-service
+            ecs_service: configuration-service
+            container_name: configuration-service
+            task_definition_name: configuration-service-task
 
     steps:
       - name: Checkout
@@ -34,10 +46,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-
       - name: Build with Maven
-        run: mvn -B clean package -pl storage-service -am -DskipTests
-
+        # Builds only the service defined in the current matrix strategy
+        run: mvn -B clean package -pl ${{ matrix.service }} -am -DskipTests
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -55,34 +66,31 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
+          ECR_REPOSITORY: ${{ matrix.ecr_repository }}
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
-          cd storage-service
+          # Build a docker container and push it to ECR
+          cd ${{ matrix.service }}
           docker build --build-arg JAR_FILE=target/*.jar -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Download Task Definition
         run: |
-          # Downloads the task definition and removes read-only fields that cause deployment errors
-          aws ecs describe-task-definition --task-definition storage-service-task --query taskDefinition | jq 'del(.enableFaultInjection, .taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-definition.json
-
-    
+          # Downloads the task definition and removes read-only fields
+          aws ecs describe-task-definition --task-definition ${{ matrix.task_definition_name }} --query taskDefinition | jq 'del(.enableFaultInjection, .taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-definition.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
+          container-name: ${{ matrix.container_name }}
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
+          service: ${{ matrix.ecs_service }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true

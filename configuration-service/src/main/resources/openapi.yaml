@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: configuration Service API
+  description: APIs for configuration physiological data
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /{customer}/configuration:
+    put:
+      tags:
+        - configuration
+      summary: Add or update configuration
+      operationId: updateConfiguration
+      parameters:
+        - name: customer
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The customer identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationData'
+      responses:
+        '200':
+          description: Data stored successfully
+        '204':
+          description: Data update successfully
+        '400':
+          description: Invalid input
+components:
+  schemas:
+    ConfigurationData:
+      type: object
+      required:
+        - customer
+        - data
+      properties:
+        customer:
+          type: string
+          description: Name of the customer
+        data:
+          type: object
+          additionalProperties:
+            type: string
+          description: Key-value pairs of configuration data
