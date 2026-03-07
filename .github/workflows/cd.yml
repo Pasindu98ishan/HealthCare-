@@ -23,13 +23,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: storage-service-1
+          - service: storage-service
             ecr_repository: storage-service-1
             ecs_service: storage-service-1
             container_name: storage-service-1
             task_definition_name: storage-service-task-1
 
-          - service: configuration-service-1
+          - service: configuration-service
             ecr_repository: configuration-service-1
             ecs_service: configuration-service-1
             container_name: configuration-service-1
