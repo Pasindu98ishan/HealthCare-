@@ -12,7 +12,7 @@ on:
 
 env:
   AWS_REGION: us-east-1                   # set this to your preferred AWS region
-  ECS_CLUSTER: default                    # set this to your Amazon ECS cluster name
+  ECS_CLUSTER: healthCare                    # set this to your Amazon ECS cluster name
 
 jobs:
   deploy:
@@ -23,17 +23,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - service: storage-service
-            ecr_repository: storage-service
-            ecs_service: storage-service
-            container_name: storage-service
-            task_definition_name: storage-service-task
+          - service: storage-service-1
+            ecr_repository: storage-service-1
+            ecs_service: storage-service-1
+            container_name: storage-service-1
+            task_definition_name: storage-service-task-1
 
-          - service: configuration-service
-            ecr_repository: configuration-service
-            ecs_service: configuration-service
-            container_name: configuration-service
-            task_definition_name: configuration-service-task
+          - service: configuration-service-1
+            ecr_repository: configuration-service-1
+            ecs_service: configuration-service-1
+            container_name: configuration-service-1
+            task_definition_name: configuration-service-task-1
 
     steps:
       - name: Checkout
